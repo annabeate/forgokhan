@@ -1,0 +1,573 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Karte</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
+    
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+
+    
+    
+    
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@2.1.3/dist/esri-leaflet.js"
+    integrity="sha512-pijLQd2FbV/7+Jwa86Mk3ACxnasfIMzJRrIlVQsuPKPCfUBCDMDUoLiBQRg7dAQY6D1rkmCcR8286hVTn/wlIg=="
+    crossorigin=""></script>
+   <script src="leaflet.awesome-markers.js"></script><!--this is new-->
+    
+    <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+    <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
+    <script src="https://d3js.org/d3-request.v1.min.js"></script>
+    
+    <script src="riga1.js"></script>
+    <script src="dati1.csv"></script>
+    <script src="ikonas.js"></script>
+    <script src="rimin.js"></script>
+    <script src="maxima.js"></script>
+ 
+   
+    <script src="laikam.js"></script>
+    <script src="tops.js"></script>
+    <script src="mego.js"></script>
+    <script src="aibe.js"></script>
+    <script src="virsi4.js"></script>
+    <script src="lats.js"></script>
+    <script src="lukoil.js"></script>
+    <script src="neste.js"></script>
+    <script src="elvi.js"></script>
+    <script src="vesko.js"></script>
+    <script src="circle.js"></script>
+    <script src="biznesacentri.js"></script>
+    <script src="kilometrs.js"></script>
+    <script src="sievietes_blivums.js"></script>
+ 
+    
+  
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<style>
+    body { margin:15; padding:0; }
+    
+#map{
+    height: auto; 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    margin-top: 50px;
+}
+.info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 5px;
+}
+.info h4 {
+        margin: 0 0 5px;
+        color: #777;
+}
+.legend {
+        line-height: 18px;
+        color: #555;
+}
+.legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.7;
+}   
+    </style>
+<body>
+ <header>  
+  <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">      
+   <div class="container">
+    <div class="navbar-header">
+     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+     </button>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+     <ul class="nav navbar-nav">
+      <li class="active"><a href="index.html"> Latvija</a></li>
+      <li><a href="riga.html">Rīga</a></li>
+    
+      </ul>
+     </div>
+   </div>
+  </nav> 
+ </header>
+    <div id="map"></div>
+    
+    <script type="text/javascript">
+    	
+        
+        //var map = L.map('map').setView([56.94, 24.105], 11);
+         
+        mapLink = 
+            '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+      var grayscale=  L.tileLayer(
+            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; ' + mapLink + ' Contributors',
+            maxZoom: 18,
+            });
+var map = L.map('map',{
+    center:[56.94, 24.105], 
+    zoom:11,
+    layers:[grayscale]});
+
+        
+        var geojson;
+        var geojson2 = "Blīvums"; //daudzums uz vienu kilometru
+        var info = L.control();
+        var legend = L.control({position: 'bottomright'});
+        
+        function getColor(d) {
+    return d > 25000 ? '#800026' :
+           d > 20000  ? '#BD0026' :
+           d > 15000  ? '#E31A1C' :
+           d > 10000  ? '#FC4E2A' :
+           d > 5000   ? '#FD8D3C' :
+           d > 2000   ? '#FEB24C' :
+           d > 1000   ? '#FED976' :
+                      '#FFEDA0';
+}
+        function getColor2(l) {
+    return l > 900 ? '#6d0604' :
+           l > 700  ? '#890805' :
+           l > 500  ? '#a00804' :
+           l > 300  ? '#bc0a05' :
+            l > 200  ? '#d30b06' :
+             l > 100  ? '#ef1610' :
+            l > 75  ? '#ef2b26' :
+            l > 50  ? '#f23c37' :
+            l > 30  ? '#f45550' :
+            l > 20  ? '#fc736f' :
+            l > 10  ? '#fc9592' :
+            l > 5  ? '#fcb7b5' :
+    
+    
+                    '#f9d7d6';
+                      
+}
+        function getColor3(m) {
+    return m > 450 ? '#6d0604' :
+           m > 350  ? '#890805' :
+           m > 250  ? '#a00804' :
+           m > 150  ? '#bc0a05' :
+            m > 100  ? '#d30b06' :
+             m > 50  ? '#ef1610' :
+            m > 37 ? '#ef2b26' :
+            m > 25  ? '#f23c37' :
+            m > 15  ? '#f45550' :
+            m > 10  ? '#fc736f' :
+            m > 5  ? '#fc9592' :
+            m > 2  ? '#fcb7b5' :
+    
+    
+                    '#f9d7d6';
+                      
+}
+function style2(feature) {
+    return {
+        fillColor: getColor2(Number(feature.properties.grid_lv_1k_population_public_Total)),
+        weight: 0.01,
+        opacity: 0,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}         
+     function style3(feature) {
+    return {
+        fillColor: getColor3(Number(feature.properties.grid_lv_1k_population_public_F)),
+        weight: 0.01,
+        opacity: 0,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}     
+        function style(feature) {
+    return {
+        fillColor: getColor(feature.properties.dati1_visi),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}
+function highlightFeature3(e) {
+    var layer = e.target;
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+        info.update3(layer.feature.properties);
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}
+      
+        function highlightFeature(e) {
+    var layer = e.target;
+
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+        info.update(layer.feature.properties);
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}
+function highlightFeature2(e) {
+    var layer = e.target;
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+        info.update2(layer.feature.properties);
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}    
+function resetHighlight3(e) {
+    geojson3.resetStyle(e.target);
+            info.update3();
+}
+        function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+            info.update();
+}
+function resetHighlight2(e) {
+    geojson2.resetStyle(e.target);
+            info.update2();
+}
+        function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+}
+        function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+function onEachFeature2(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature2,
+        mouseout: resetHighlight2,
+        click: zoomToFeature
+    });
+}
+        function onEachFeature3(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature3,
+        mouseout: resetHighlight3,
+        click: zoomToFeature
+    });
+}
+var psv = d3.dsvFormat(";", "iso-8859-1");
+var mainigais = d3.request("dati1.csv", )
+  .mimeType("text/plain")
+.response(function(xhr) { return psv.parse(xhr.responseText) })
+ .get(function(data) {
+    console.log("pipe-delimited data:");
+    console.log(data);
+    console.log(data.length);
+    
+     for (var i = 0; i < data.length; i++) {
+         if (data[i].Sutijumi>2000){
+             marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:zvaigzne})
+			.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>" +"<dd>"+data[i].Datums+"</dd>")
+			.addTo(map);
+	}
+    }
+     
+    for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>1200 && data[i].Sutijumi<2000){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:okzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>"+"<dd>"+data[i].Datums+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>=700 && data[i].Sutijumi<1200){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:sadzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>"+"<dd>"+data[i].Datums+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>0 && data[i].Sutijumi<700){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:badzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>"+"<dd>"+data[i].Datums+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi<0){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:nezinuzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>"+"<dd>"+data[i].Datums+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     
+ });//pakomatu novietojums
+        
+var layerGroup = L.layerGroup();
+//veikals maxima
+for (var i = 0; i < maxima.length; i++) {
+			     marker = new L.marker([maxima[i][1],maxima[i][2]], {icon:maximam})
+                .bindPopup("Maxima", maxima[i][0])
+				layerGroup.addLayer(marker)
+}
+var veikali = rimin.stores;
+var layerGroup1=L.layerGroup();
+for (var i = 0; i < veikali.length; i++) {
+			     marker = new L.marker([Number(veikali[i].lat),veikali[i].lon], {icon:rimiikona})
+                .bindPopup( veikali[i].title)
+				layerGroup1.addLayer(marker)
+}
+
+
+
+var pastus =pasts[0].result;
+var layerGroup2=L.layerGroup();
+for (var i = 0; i < pastus.length; i++) {
+			     marker = new L.marker([Number(pastus[i].lat),pastus[i].lon], {icon:pastsikona})
+                .bindPopup( pastus[i].lp_po_mailbox_nr+"<br>"+pastus[i].lp_po_mailbox_address_text)
+				layerGroup2.addLayer(marker)
+}
+console.log(coords);
+
+var topus =tops[0].shops;
+var layerGroup3=L.layerGroup();
+var nez =[];
+var a =[];
+var b =[];
+var koord =[];
+for (var i = 0; i <272; i++) {
+                nez[i] =topus[i].gps;
+                koord[i] =nez[i].split(", ");
+                a[i] =Number(koord[i][0]);
+                b[i] =Number(koord[i][1]);
+              
+
+}    
+console.log(a);
+ for (var i = 0; i <270; i++) {
+     if (a[i]>0){
+         if ( b[i]!=0){
+			     marker = new L.marker([a[i],b[i]], {icon:topsikona})
+                .bindPopup( topus[i].id)
+				layerGroup3.addLayer(marker)
+    }
+     }
+        }
+var layerGroup4=L.layerGroup();
+for (var i = 0; i < coords.length; i++) {
+			     marker = new L.marker([Number(coords[i].x),Number(coords[i].y)], {icon:megoikona})
+                .bindPopup( coords[i].info)
+				layerGroup4.addLayer(marker)
+}
+console.log(aibe[0]);
+var layerGroup5=L.layerGroup();
+for (var i = 0; i < gMarkers.length; i++) {
+			     marker = new L.marker([gMarkers[i][6],gMarkers[i][7]], {icon:elviikona})
+                .bindPopup( gMarkers[i][0])
+				layerGroup5.addLayer(marker)
+}   
+var layerGroup6=L.layerGroup();
+var k=aibe[0];
+
+
+
+
+for (var i = 1; i < 401; i++) {
+                
+    if(k[i].shopmapitem01_lat.value>0 && k[i].shopmapitem01_lng.value>0){
+			    marker = new L.marker([Number(k[i].shopmapitem01_lat.value),Number(k[i].shopmapitem01_lng.value)], {icon:aibeikona})
+                .bindPopup( k[i].shopmapitem01_name.value)
+				layerGroup6.addLayer(marker)
+} 
+}
+var layerGroup7=L.layerGroup();
+       
+for (var i = 0; i < lats.features.length; i++) {
+			     marker = new L.marker([lats.features[i].lat,lats.features[i].lon], {icon:latsikona})
+                .bindPopup( lats.features[i].popup)
+				layerGroup7.addLayer(marker)
+}
+
+var layerGroup8=L.layerGroup();
+       
+for (var i = 0; i < vesko.length; i++) {
+			     marker = new L.marker([Number(vesko[i].x),Number(vesko[i].y)], {icon:veskoikona})
+                .bindPopup( vesko[i].info)
+				layerGroup8.addLayer(marker)
+}
+var layerGroup9=L.layerGroup();
+       
+for (var i = 0; i < circle.length; i++) {
+			     marker = new L.marker([circle[i][2],circle[i][3]], {icon:circleikona})
+                .bindPopup( circle[i][0]+"<br>"+circle[i][1])
+				layerGroup9.addLayer(marker)
+}
+console.log(neste);
+
+var layerGroup10=L.layerGroup();
+       
+for (var i = 0; i < virsi.length; i++) {
+			     marker = new L.marker([virsi[i][0],virsi[i][1]], {icon:virsiikona})
+				layerGroup10.addLayer(marker)
+}
+
+var layerGroup11=L.layerGroup();
+       
+for (var i = 0; i < lukoil.length; i++) {
+			     marker = new L.marker([lukoil[i][0],lukoil[i][1]], {icon:lukoilikona})
+				layerGroup11.addLayer(marker)
+}
+
+var layerGroup12=L.layerGroup();
+       
+for (var i = 0; i < neste.features.length; i++) {
+			     marker = new L.marker([Number(neste.features[i].lat),Number(neste.features[i].lon)], {icon:nesteikona})
+                .bindPopup( neste.features[i].popup)
+				layerGroup12.addLayer(marker)
+}
+        
+var layerGroup13=L.layerGroup();
+for (var i = 0; i < biznesacentri.length; i++) {
+			     marker = new L.marker([Number(biznesacentri[i][2]),biznesacentri[i][3]], {icon:centriikona})
+                .bindPopup( biznesacentri[i][0]+"<br>"+biznesacentri[i][1])
+				layerGroup13.addLayer(marker)
+}
+       geojson=L.geoJson(riga1, {style: style, onEachFeature: onEachFeature}).addTo(map);
+        geojson2=L.geoJson(kilometrs, {style: style2, onEachFeature: onEachFeature2});
+        geojson3=L.geoJson(sievietesblivums, {style: style3, onEachFeature: onEachFeature3});       
+
+
+        
+//
+
+
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update();
+    return this._div;
+};
+
+// method that we will use to update the control based on feature properties passed
+info.update = function (props) {
+    this._div.innerHTML = '<h4>Iedzīvotāju skaits darbspējas vecumā</h4>' +  (props ?
+        '<b>' + props.apkaime + '</b><br />' + props.dati1_visi + ' cilvēki </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+info.update2 = function (props1) {
+    this._div.innerHTML = '<h4>Cilvēku daudzums uz vienu kadrātkilometru</h4>' +  (props1 ?
+        '<b>' + props1.L0_name + '</b><br />' + props1.grid_lv_1k_population_public_Total + ' </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+info.update3 = function (props1) {
+    this._div.innerHTML = '<h4>Cilvēku daudzums uz vienu kadrātkilometru</h4>' +  (props1 ?
+        '<b>' + props1.L0_name + '</b><br />' + props1.grid_lv_1k_population_public_F + ' </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+info.addTo(map);
+        
+        legend.onAdd = function (map) {
+
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 1000, 2000, 5000, 10000, 15000, 20000, 25000],
+        labels = [];
+
+    // loop through our density intervals and generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+    }
+
+    return div;
+};
+       legend.addTo(map); 
+var baseMaps ={
+    "Grayscale":grayscale
+};
+           
+var overlayMaps={
+  "Iedzīvotāji darbspējas vecumā":geojson, 
+"Blīvums":geojson2, 
+"Sievietes blīvums pēc 2011.g":geojson3
+};     
+        
+        
+var overlayMaps1={
+  
+    "Maxima": layerGroup, 
+    "Rimi": layerGroup1, 
+    "Pasts":layerGroup2, 
+    "Tops":layerGroup3, 
+    "Mego":layerGroup4,
+    "Elvi":layerGroup5, 
+    "Aibe":layerGroup6, 
+    "Lats":layerGroup7,
+    "Vesko":layerGroup8
+};
+var overlayMaps2={
+  
+    "Circle K": layerGroup9,
+    "Virši":layerGroup10, 
+    "Lukoil":layerGroup11, 
+    "Neste":layerGroup12
+
+
+};
+var overlayMaps3={
+  
+    "Biznesa centri": layerGroup13,
+
+};
+        L.control.layers(null,overlayMaps).addTo(map);
+        L.control.layers(null,overlayMaps1).addTo(map);
+        L.control.layers(null,overlayMaps2).addTo(map);
+        L.control.layers(null,overlayMaps3).addTo(map);
+//L.control.layers(null, overlay).addTo(map);
+       
+    </script>
+   
+    </script>
+    
+    
+    <script src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+</body>
+</html>

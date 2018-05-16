@@ -1,0 +1,415 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Karte</title>
+    
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css" />
+    
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+
+    
+    
+    
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@2.1.3/dist/esri-leaflet.js"
+    integrity="sha512-pijLQd2FbV/7+Jwa86Mk3ACxnasfIMzJRrIlVQsuPKPCfUBCDMDUoLiBQRg7dAQY6D1rkmCcR8286hVTn/wlIg=="
+    crossorigin=""></script>
+   <script src="leaflet.awesome-markers.js"></script><!--this is new-->
+    
+    <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+    <script src="https://d3js.org/d3-dsv.v1.min.js"></script>
+    <script src="https://d3js.org/d3-request.v1.min.js"></script>
+    
+    
+    <script src="regioni1.js"></script>
+    <script src="ikonas.js"></script>
+    <script src="rimin.js"></script>
+    <script src="maxima.js"></script>
+    <script src="indekss.js"></script>
+    <script src="rimi1.js"></script>
+    <script src="pasts.js"></script>
+    <script src="kilometrs.js"></script>
+    
+    
+  
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+<style>
+    body { margin:15; padding:0; }
+    
+#map{
+    height: auto; 
+    position: absolute; 
+    top: 0; 
+    bottom: 0; 
+    left: 0; 
+    right: 0;
+    margin-top: 50px;
+}
+.info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 5px;
+}
+.info h4 {
+        margin: 0 0 5px;
+        color: #777;
+}
+.legend {
+        line-height: 18px;
+        color: #555;
+}
+.legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.7;
+}   
+.leaflet-marker-icon.sans-serif {
+	font-weight: bold;
+	font-family: Sans Serif;
+}
+    </style>
+<body>
+ <header>  
+  <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">      
+   <div class="container">
+    <div class="navbar-header">
+     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+     </button>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+     <ul class="nav navbar-nav">
+      <li class="active"><a href="index.html"> Latvija</a></li>
+      <li><a href="riga.html">Rīga</a></li>
+    
+      </ul>
+     </div>
+   </div>
+  </nav> 
+ </header>
+    <div id="map"></div>
+    
+    <script type="text/javascript">
+    	
+        
+         
+        mapLink = 
+            '<a href="http://openstreetmap.org">OpenStreetMap</a>';
+var grayscale = L.tileLayer(
+            'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; ' + mapLink + ' Contributors',
+                maxZoom: 18,
+            });
+var map = L.map('map',{
+    center:[57, 24], 
+    zoom:7,
+    layers:[grayscale]});
+        
+        var geojson = "Iedzīvotāji darbspējas vecumā"; //regioni
+        var geojson1 = "Attīstības indekss"; //indekss
+        var geojson2 = "Blīvums"; //daudzums uz vienu kilometru
+        var info = L.control();//regioni
+        var info1 = L.control();//indekss
+        var legend = L.control({position: 'bottomright'});
+    
+function getColor(d) {
+    return d > 100000 ? '#800026' :
+           d > 20000  ? '#BD0026' :
+           d > 15000  ? '#E31A1C' :
+           d > 10000  ? '#FC4E2A' :
+           d > 5000   ? '#FD8D3C' :
+           d > 2000   ? '#FEB24C' :
+           d > 1000   ? '#FED976' :
+                      '#FFEDA0';
+}
+//attīstības indeksa krāsas 
+function getColor1(e) {
+    return e > 1.5 ? '#002699' :
+           e > 1  ? '#3366ff' :
+           e > 0.5  ? '#668cff' :
+           e > 0  ? '#99b3ff' :
+           e > -0.5   ? '#c1d4f2' :
+           e > -1  ? '#dce6f7' :
+           e > - 2  ? '#e8eef7' :
+                    '#e8eef7';
+                      
+}
+function getColor2(l) {
+    return l > 900 ? '#6d0604' :
+           l > 700  ? '#890805' :
+           l > 500  ? '#a00804' :
+           l > 300  ? '#bc0a05' :
+            l > 200  ? '#d30b06' :
+             l > 100  ? '#ef1610' :
+            l > 75  ? '#ef2b26' :
+            l > 50  ? '#f23c37' :
+            l > 30  ? '#f45550' :
+            l > 20  ? '#fc736f' :
+            l > 10  ? '#fc9592' :
+            l > 5  ? '#fcb7b5' :
+    
+    
+                    '#f9d7d6';
+                      
+}
+//stils reģionu slānim
+function style(feature) {
+    return {
+        fillColor: getColor(feature.properties.IS0180_field_2),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}
+//stils ideksu slānim
+function style1(feature) {
+    return {
+        fillColor: getColor1(feature.properties.indekss_Indekss),
+        weight: 2,
+        opacity: 1,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}
+function style2(feature) {
+    return {
+        fillColor: getColor2(Number(feature.properties.grid_lv_1k_population_public_Total)),
+        weight: 0.01,
+        opacity: 0,
+        color: 'white',
+        dashArray: '3',
+        fillOpacity: 0.7
+    };
+}       
+function highlightFeature(e) {
+    var layer = e.target;
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+        info.update(layer.feature.properties);
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}
+        
+function highlightFeature1(e) {
+    var layer = e.target;
+    layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+    });
+        info.update1(layer.feature.properties);
+    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        layer.bringToFront();
+    }
+}
+        
+function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+            info.update();
+}
+        
+function resetHighlight1(e) {
+    geojson1.resetStyle(e.target);
+            info.update1();
+}
+        
+function resetHighlight2(e) {
+    geojson2.resetStyle(e.target);
+            info.update2();
+}
+function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+}
+//regioni
+function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+//indekss
+function onEachFeature1(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature1,
+        mouseout: resetHighlight1,
+        click: zoomToFeature
+    });
+}
+function onEachFeature2(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature1,
+        mouseout: resetHighlight2,
+        click: zoomToFeature
+    });
+}
+//ikonas marķieriem        
+var layerGroup = L.layerGroup().addTo(map);
+//veikals maxima
+for (var i = 0; i < maxima.length; i++) {
+			     marker = new L.marker([maxima[i][1],maxima[i][2]], {icon:maximam})
+                .bindPopup("Maxima", maxima[i][0])
+				layerGroup.addLayer(marker)
+}
+//csv mēģinājums, marķieri, utt. 
+var psv = d3.dsvFormat(";", "iso-8859-1");
+var mainigais = d3.request("dati1.csv", )
+  .mimeType("text/plain")
+.response(function(xhr) { return psv.parse(xhr.responseText) })
+ .get(function(data) {
+    console.log("pipe-delimited data:");
+    console.log(data);
+    console.log(data.length);
+    
+     for (var i = 0; i < data.length; i++) {
+         if (data[i].Sutijumi>2000){
+             marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:zvaigzne})
+			.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>")
+			.addTo(map);
+	}
+    }
+     
+    for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>1200 && data[i].Sutijumi<2000){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:okzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>=700 && data[i].Sutijumi<1200){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:sadzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi>0 && data[i].Sutijumi<700){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:badzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     for (var i = 0; i < data.length; i++) {
+        if (data[i].Sutijumi<0){
+			marker = new L.marker([data[i].KoordX,data[i].KoordY], {icon:nezinuzvaigzne})
+				.bindPopup("<dt>"+data[i].Pakomats+"</dt>"+"<dd>"+data[i].Sutijumi+"</dd>")
+			     .addTo(map);
+		} 
+    }
+     
+ });//pakomatu novietojums
+        
+console.log(rimin.stores);
+var veikali = rimin.stores;
+for (var i = 0; i < veikali.length; i++) {
+			     marker = new L.marker([Number(veikali[i].lat),veikali[i].lon], {icon:rimiikona})
+                .bindPopup( veikali[i].title)
+				layerGroup.addLayer(marker)
+}
+//console.log(rimin[1]);
+//console.log(parsed[1]);
+//console.log(visi);
+geojson=L.geoJson(regioni1, {style: style, onEachFeature: onEachFeature});
+geojson1=L.geoJson(indekss, {style: style1, onEachFeature: onEachFeature1});
+geojson2=L.geoJson(kilometrs, {style: style2, onEachFeature: onEachFeature2});
+        
+//
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update();
+    return this._div;
+};
+info.onAdd1 = function (map) {
+    this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
+    this.update1();
+    return this._div;
+};
+// method that we will use to update the control based on feature properties passed
+info.update = function (props) {
+    this._div.innerHTML = '<h4>Iedzīvotāju skaits darbspējas vecumā</h4>' +  (props ?
+        '<b>' + props.L0_name + '</b><br />' + props.IS0180_field_2 + ' cilvēki </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+        
+info.update1 = function (props1) {
+    this._div.innerHTML = '<h4>Attīstības indekss</h4>' +  (props1 ?
+        '<b>' + props1.L0_name + '</b><br />' + props1.indekss_Indekss + ' </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+info.addTo(map);
+ 
+info.update2 = function (props1) {
+    this._div.innerHTML = '<h4>Cilvēku daudzums uz vienu kvadrātkilometru</h4>' +  (props1 ?
+        '<b>' + props1.L0_name + '</b><br />' + props1.grid_lv_1k_population_public_Total + ' </sup>'
+        : 'Pārvietojaties uz reģioniem/novadiem');
+};
+info.addTo(map);
+//leģenda
+legend.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 1000, 2000, 5000, 10000, 15000, 20000, 100000],
+        labels = [];
+    // loop through our density intervals and generate a label with a colored square for each interval
+    for (var i = 0; i < grades.length; i++) {
+        div.innerHTML +=
+            '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+            grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+    }
+    return div;
+};
+legend.addTo(map); 
+        
+var baseMaps ={
+    "Grayscale":grayscale
+};
+           
+var overlayMaps={
+  "Iedzīvotāji darbspējas vecumā":geojson, "Attīstības indekss":geojson1,"Blīvums":geojson2
+};     
+        
+        
+var overlayMaps1={
+  
+    "Maxima": layerGroup
+};
+        L.control.layers(null,overlayMaps).addTo(map);
+        L.control.layers(null,overlayMaps1).addTo(map);
+        
+    </script>
+    
+    
+    <script src="http://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="leaflet-beautify-marker-icon.js"></script>
+</body>
+</html>
